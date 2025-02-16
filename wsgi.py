@@ -1,5 +1,5 @@
 import click, sys
-from models import db, User
+from models import db, User, Todo
 from app import app
 from sqlalchemy.exc import IntegrityError
 
@@ -10,11 +10,11 @@ def initialize():
   db.init_app(app)
   db.create_all()
   bob = User('bob', 'bob@mail.com', 'bobpass')
-  print(bob)
-  print('database intialized')
+  bob.todos.append(Todo('wash car'))
   db.session.add(bob)
   db.session.commit()
   print(bob)
+  print('database intialized')
 
 @app.cli.command("get-user", help="Retrieves a User")
 @click.argument('username', default='bob')
@@ -60,3 +60,23 @@ def create_user(username, email, password):
     print("Username or email already taken!") #give the user a useful message
   else:
     print(newuser) # print the newly created user
+
+@app.cli.command('delete-user', help="Deletes a user")
+@click.argument('username', default='bob')
+def delete_user(username):
+  bob = User.query.filter_by(username=username).first()
+  if not bob:
+      print(f'{username} not found!')
+      return
+  db.session.delete(bob)
+  db.session.commit()
+  print(f'{username} deleted')
+
+@app.cli.command('get-todos', help="Retrieves todos")
+@click.argument('username', default='bob')
+def get_user_todos(username):
+  bob = User.query.filter_by(username=username).first()
+  if not bob:
+      print(f'{username} not found!')
+      return
+  print(bob.todos)
